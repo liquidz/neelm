@@ -1,6 +1,6 @@
 (ns sin-curv
   (:require [incanter.charts :refer [add-lines xy-plot]]
-            [incanter.core :refer [view]]
+            [incanter.core :refer [view save]]
             [neelm.core :refer [add-bias fit predict]]
             [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.native :refer :all]))
@@ -21,7 +21,7 @@
         predicted-y' (to-seq predicted-y)
         c (xy-plot x' y')]
     (add-lines c x' predicted-y')
-    (view c)))
+    (save c "result.png")))
 
 (defn main []
   (let [[x y] (dataset)
