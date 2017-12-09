@@ -1,7 +1,7 @@
 (ns sin-curv
-  (:require [incanter.charts :refer [add-lines xy-plot]]
-            [incanter.core :refer [view save]]
-            [neelm.core :refer [add-bias fit predict]]
+  (:require ;;[incanter.charts :refer [add-lines xy-plot]]
+            ;;[incanter.core :refer [view save]]
+            [neelm.core :refer :all]
             [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.native :refer :all]))
 
@@ -15,16 +15,15 @@
 (defn- to-seq [x]
   (seq (col x 0)))
 
-(defn plot [x y predicted-y]
-  (let [x' (to-seq x)
-        y' (to-seq y)
-        predicted-y' (to-seq predicted-y)
-        c (xy-plot x' y')]
-    (add-lines c x' predicted-y')
-    (save c "result.png")))
+;;(defn plot [x y predicted-y]
+;;  (let [x' (to-seq x)
+;;        y' (to-seq y)
+;;        predicted-y' (to-seq predicted-y)
+;;        c (xy-plot x' y')]
+;;    (add-lines c x' predicted-y')
+;;    (save c "result.png")))
 
 (defn main []
   (let [[x y] (dataset)
-        model (fit x y)
-        py (predict model x)]
-    (plot x y py)))
+        model (fit x y {:n-hidden 1000})]
+    (score model x y)))

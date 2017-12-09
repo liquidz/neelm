@@ -2,7 +2,11 @@
   (:require [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.linalg :as n.l]
             [uncomplicate.neanderthal.native :refer :all]
-            [uncomplicate.neanderthal.vect-math :as n.v]))
+            [uncomplicate.neanderthal.vect-math :as n.v]
+            
+            [housing :as h]
+            
+            ))
 
 (defn- randoms []
   (let [r (java.util.Random. (System/currentTimeMillis))]
@@ -77,3 +81,16 @@
   (let [{:keys [a b beta]} model
         h (forward a b x)]
     (mm h beta)))
+
+(defn score
+  "Returns the coefficient of determination R^2 of the prediction."
+  [model x y]
+  (let [y' (predict model x)
+        y-v (col y 0)
+        y'-v (col y' 0)
+        num-rows (mrows y)
+        y-mean (/ (sum y-v) num-rows)
+        y-mean-v (dv (repeat num-rows y-mean))
+        u (sum (n.v/pow (axpy -1 y'-v y-v) 2))
+        v (sum (n.v/pow (axpy -1 y-mean-v y-v) 2))]
+    (- 1.0 (/ u v))))
