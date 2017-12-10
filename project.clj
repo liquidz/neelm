@@ -8,4 +8,5 @@
   :profiles
   {:dev {:source-paths  ["example"]
          :dependencies [[incanter/incanter-core "1.5.7"]
-                        [incanter/incanter-charts "1.5.7"]]}})
+                        [incanter/incanter-charts "1.5.7"]]
+         :jvm-opts  ["-Xmx1g"]}})
