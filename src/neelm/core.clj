@@ -2,11 +2,7 @@
   (:require [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.linalg :as n.l]
             [uncomplicate.neanderthal.native :refer :all]
-            [uncomplicate.neanderthal.vect-math :as n.v]
-            
-            [housing :as h]
-            
-            ))
+            [uncomplicate.neanderthal.vect-math :as n.v]))
 
 (defn- randoms []
   (let [r (java.util.Random. (System/currentTimeMillis))]
@@ -26,12 +22,26 @@
     x'))
 
 (defn mpv!
+  "Matrix Plus Vector"
   ([mat v] (mpv! 1 mat v))
   ([alpha mat v]
    (doseq [r (rows mat)]
      (axpy! alpha v r))))
 
+(defn mdv!
+  "Matrix Divide by Vector"
+  [mat v]
+  (alter! mat (fn ^double [^long i ^long j ^double x]
+                (/ x  (entry v j)))))
+(defn mdv
+  "Matrix Divide by Vector without side effect"
+  [mat v]
+  (let [mat' (copy mat)]
+    (mdv! mat' v)
+    mat'))
+
 (defn mpv
+  "Matrix Plus Vector without side effect"
   ([mat v] (mpv 1 mat v))
   ([alpha mat v]
    (let [x (copy mat)]
@@ -94,3 +104,20 @@
         u (sum (n.v/pow (axpy -1 y'-v y-v) 2))
         v (sum (n.v/pow (axpy -1 y-mean-v y-v) 2))]
     (- 1.0 (/ u v))))
+
+(defn vmax [v]
+  (entry v (imax v)))
+(defn vmin [v]
+  (entry v (imin v)))
+
+(defn normalize [x & [opt]]
+  (let [from (:from opt 0.0)
+        to  (:to opt 1.0)
+        cs (cols x)
+        n (-> cs first dim)
+        cols-max (dv (map vmax cs))
+        cols-min (dv (map vmin cs))
+        std (mdv (mpv -1 x cols-min)
+                 (axpy -1 cols-min cols-max))]
+    (mpv (scal (- to from) std)
+         (dv (repeat (ncols x) from)))))
