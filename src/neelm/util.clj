@@ -22,3 +22,16 @@
       (submatrix mat 0 0 n num-cols)
       (submatrix mat n 0 (- num-rows n) num-cols))))
 
+(defn random-samples [x y & [opt]]
+  (let [ratio (:ratio opt 2/3)
+        num-rows (mrows x)
+        num-cols (ncols x)
+        mmm (int (* num-rows ratio))
+        row-indexes (take mmm (shuffle (range num-rows)))
+        x' (dge mmm num-cols)
+        y' (dge mmm (ncols y)) ]
+    (doseq [i (range mmm)]
+      (copy! (row x (nth row-indexes i)) (row x' i)))
+    (doseq [i (range mmm)]
+      (copy! (row y (nth row-indexes i)) (row y' i)))
+    [x' y']))

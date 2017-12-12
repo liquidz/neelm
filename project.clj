@@ -7,6 +7,7 @@
                  [uncomplicate/neanderthal "0.17.1"]]
   :profiles
   {:dev {:source-paths  ["example"]
-         :dependencies [[incanter/incanter-core "1.5.7"]
+         :dependencies [[fudje  "0.9.7"]
+                        [incanter/incanter-core "1.5.7"]
                         [incanter/incanter-charts "1.5.7"]]
          :jvm-opts  ["-Xmx1g"]}})

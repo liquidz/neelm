@@ -1,20 +1,11 @@
 (ns sin-curv
   (:require ;;[incanter.charts :refer [add-lines xy-plot]]
             ;;[incanter.core :refer [view save]]
-            [neelm.core :refer :all]
-            [uncomplicate.neanderthal.core :refer :all]
-            [uncomplicate.neanderthal.native :refer :all]))
+            [neelm.core :refer :all]))
 
-(defn dataset []
-  (let [x (range -10 10 0.1)
-        y (map #(Math/sin %) x)
-        n (count x)]
-    [(add-bias (dge n 1 x))
-     (dge n 1 y)]))
-
-(defn- to-seq [x]
-  (seq (col x 0)))
-
+;;(defn- to-seq [x]
+;;  (seq (col x 0)))
+;;
 ;;(defn plot [x y predicted-y]
 ;;  (let [x' (to-seq x)
 ;;        y' (to-seq y)
@@ -24,6 +15,7 @@
 ;;    (save c "result.png")))
 
 (defn main []
-  (let [[x y] (dataset)
-        model (fit x y {:n-hidden 1000})]
+  (let [x (range -10 10 0.1)
+        y (map #(Math/sin %) x)
+        model (fit (regression {:x x :y y :n-hidden 50 :add-bias? true}))]
     (score model x y)))

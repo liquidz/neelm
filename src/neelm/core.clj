@@ -4,6 +4,8 @@
             [uncomplicate.neanderthal.native :refer :all]
             [uncomplicate.neanderthal.vect-math :as n.v]))
 
+(def default-argument {:n-hidden 200})
+
 (defn- randoms []
   (let [r (java.util.Random. (System/currentTimeMillis))]
     (repeatedly (fn [] (.nextGaussian r)))))
@@ -71,31 +73,62 @@
       (copy! (col mat i) (col res i)))
     res))
 
-(defn forward
+(defn- forward
   "H = sigmoid(a*x+b)"
   [a b x]
   (sigmoid
    (mpv (mm x (trans a))
         b)))
 
-(defn fit [x y & [opt]]
-  (let [n-hidden (or (:n-hidden opt) 200)
+(defn fit [model]
+  (let [{:keys [x y n-hidden]} model
         n-cols (ncols x)
         a (random-samples n-hidden n-cols)
         b (random-samples n-hidden)
         h (forward a b x)
-        beta (mm (pinv h) y) ]
-    {:a a :b b :beta beta}))
+        beta (mm (pinv h) y)]
+    (assoc model :a a :b b :beta beta)))
 
 (defn predict [model x]
   (let [{:keys [a b beta]} model
         h (forward a b x)]
     (mm h beta)))
 
-(defn score
-  "Returns the coefficient of determination R^2 of the prediction."
+(defn- sequence-shape [ls]
+  (let [m (count ls)]
+    (if (-> ls first sequential?)
+      [m (-> ls first count)]
+      [m 1])))
+
+(defn- construct-x-y [model x y]
+  (let [{:keys [add-bias? normalize?]} model
+        [m n] (sequence-shape x)
+        x (trans (dge n m (flatten x)))]
+    [(cond-> x
+       normalize? normalize
+       add-bias? add-bias)
+     (dge m 1 y)]))
+
+(defn regression [{:keys [x y] :as arg-map}]
+  (let [[x y] (construct-x-y arg-map x y)]
+    (merge default-argument
+           {:type :regression }
+           (assoc arg-map :x x :y y))))
+
+(defn classification [arg-map]
+  (merge default-argument
+         {:type :classification}
+         arg-map))
+
+(defmulti score
+  "regression -> Returns the coefficient of determination R^2 of the prediction.
+  "
+  (fn [model x y] (:type model)))
+
+(defmethod score :regression
   [model x y]
-  (let [y' (predict model x)
+  (let [[x y] (construct-x-y model x y)
+        y' (predict model x)
         y-v (col y 0)
         y'-v (col y' 0)
         num-rows (mrows y)

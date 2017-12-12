@@ -3,11 +3,7 @@
             [neelm.core :as sut]
             [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.native :refer :all]
-            ))
-#_(:require [uncomplicate.neanderthal.core :refer :all]
-            [uncomplicate.neanderthal.linalg :as n.l]
-            [uncomplicate.neanderthal.native :refer :all]
-            [uncomplicate.neanderthal.vect-math :as n.v])
+            [fudje.sweet :as fj]))
 
 (t/deftest random-samples-test
   (t/testing "vector"
@@ -26,6 +22,34 @@
        res (sut/normalize mat)
        expected (dge 2 3 [0.0 1.0 0.0 1.0 0.0 1.0]) ]
     (t/is (= expected res))))
+
+(t/deftest regression-test
+  (t/testing "vector"
+    (t/is
+      (compatible
+        (sut/regression {:x [1 2 3] :y [4 5 6]})
+        (fj/contains
+          {:n-hidden (:n-hidden sut/default-argument)
+           :x (fj/checker #(and (matrix? %)
+                                (= [3 1] (sut/shape %))))
+           :y (fj/checker #(and (matrix? %)
+                                (= [3 1] (sut/shape %))))}))))
+
+  (t/testing "matrix"
+    (t/is
+      (compatible
+        (sut/regression {:x [[1 2 3] [4 5 6]] :y [7 8] :n-hidden 10})
+        (fj/contains
+          {:n-hidden 10
+           :x (fj/checker #(= [2 3] (sut/shape %)))
+           :y (fj/checker #(= [2 1] (sut/shape %)))}))))
+
+  (t/testing "add-bias"
+    (t/is
+      (compatible
+        (sut/regression {:x [1 2 3] :y [4 5 6] :add-bias? true})
+        (fj/contains
+          {:x (fj/checker #(= [3 2] (sut/shape %)))})))))
 
 #_(t/deftest sigmoid-test
   (t/is false)

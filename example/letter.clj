@@ -28,10 +28,10 @@
 
 (defn main []
   (let [{:keys [x y]} (dataset)
-        x  (normalize x)
+        x (normalize x)
         [train-x test-x] (msplit-at 15000 x)
         [train-y test-y] (msplit-at 15000 y)
-        model (fit train-x train-y {:n-hidden 1000})
+        model (fit (classification {:x train-x :y train-y :n-hidden 500}))
         num-rows (mrows test-x)
         y' (predict model test-x)]
 
@@ -40,4 +40,3 @@
          count
          ((fn [n] (/ n (mrows test-x))))
          double)))
-
