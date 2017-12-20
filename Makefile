@@ -1,28 +1,33 @@
-.PHONY: all clean boston letter
-all: boston letter
+.PHONY: all clean iris boston letter
 
-boston: resources/housing.data
-letter: resources/letter.data
+all: iris boston letter
 
-resources/housing.data:
+iris: assets/iris.data
+boston: assets/housing.data
+letter: assets/letter.data
+
+assets/iris.data:
+	wget -O $@ https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
+
+assets/housing.data:
 	wget -O $@ https://archive.ics.uci.edu/ml/machine-learning-databases/housing/housing.data
 
-resources/letter.data:
+assets/letter.data:
 	wget -O $@ https://archive.ics.uci.edu/ml/machine-learning-databases/letter-recognition/letter-recognition.data
 
 
-resources/mnist.scale: resources/mnist.scale.bz2
-	(cd resources; bunzip2 mnist.scale.bz2)
-resources/mnist.scale.bz2:
-	wget -O ./resources/mnist.scale.bz2 \
+assets/mnist.scale: assets/mnist.scale.bz2
+	(cd assets; bunzip2 mnist.scale.bz2)
+assets/mnist.scale.bz2:
+	wget -O ./assets/mnist.scale.bz2 \
 		https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/mnist.scale.bz2
 
 
-resources/mnist.scale.t: resources/mnist.scale.t.bz2
-	(cd resources; bunzip2 mnist.scale.t.bz2)
-resources/mnist.scale.t.bz2:
+assets/mnist.scale.t: assets/mnist.scale.t.bz2
+	(cd assets; bunzip2 mnist.scale.t.bz2)
+assets/mnist.scale.t.bz2:
 	wget -O $@ \
 		https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/mnist.scale.t.bz2
 
 clean:
-	\rm -rf resources/*.data
+	\rm -rf assets/*.data

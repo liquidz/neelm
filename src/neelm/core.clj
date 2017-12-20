@@ -1,156 +1,78 @@
 (ns neelm.core
-  (:require [uncomplicate.neanderthal.core :refer :all]
-            [uncomplicate.neanderthal.linalg :as n.l]
-            [uncomplicate.neanderthal.native :refer :all]
-            [uncomplicate.neanderthal.vect-math :as n.v]))
+  (:require [clojure.spec.alpha :as s]
+            [neelm.alg :as alg]
+            [neelm.operation :as op]
+            neelm.score.classification
+            neelm.score.regression
+            neelm.serialize
+            [neelm.spec :as spec]))
 
-(def default-argument {:n-hidden 200})
+(def default-argument {:hidden-nodes 200
+                       :activation :sigmoid})
 
-(defn- randoms []
-  (let [r (java.util.Random. (System/currentTimeMillis))]
-    (repeatedly (fn [] (.nextGaussian r)))))
-
-(defn random-samples
-  ([n]
-   (dv (take n (randoms))))
-  ([n m]
-   (dge n m (take (* n m) (randoms)))))
-
-(defn- sigmoid [x]
-  (let [x' (copy x)]
-    (scal! -1 x')
-    (n.v/exp! x')
-    (alter! x' (fn ^double [^long i ^long j ^double x] (/ 1 (inc x))))
-    x'))
-
-(defn mpv!
-  "Matrix Plus Vector"
-  ([mat v] (mpv! 1 mat v))
-  ([alpha mat v]
-   (doseq [r (rows mat)]
-     (axpy! alpha v r))))
-
-(defn mdv!
-  "Matrix Divide by Vector"
-  [mat v]
-  (alter! mat (fn ^double [^long i ^long j ^double x]
-                (/ x  (entry v j)))))
-(defn mdv
-  "Matrix Divide by Vector without side effect"
-  [mat v]
-  (let [mat' (copy mat)]
-    (mdv! mat' v)
-    mat'))
-
-(defn mpv
-  "Matrix Plus Vector without side effect"
-  ([mat v] (mpv 1 mat v))
-  ([alpha mat v]
-   (let [x (copy mat)]
-     (mpv! alpha x v)
-     x)))
-
-(def shape (juxt mrows ncols))
-
-;; https://software.intel.com/en-us/articles/implement-pseudoinverse-of-a-matrix-by-intel-mkl
-(defn pinv [mat & {:keys [alpha beta] :or {alpha 1.0 beta 0.0}}]
-  (let [[m n] (shape mat)
-        k (min m n)
-        {:keys [sigma u vt]} (n.l/svd mat true true)
-        inva (dge n m)]
-    (dotimes [i k]
-      (let [si (entry sigma i i)
-            ss (double (if (> si 1.0e-9) (/ 1.0 si) si))]
-        (scal! ss (col u i))))
-    (mm! alpha (trans vt) (trans u) beta inva)
-    inva))
-
-(defn add-bias [mat]
-  (let [[m n] (shape mat)
-        res (dge m (inc n))]
-    (entry! res 1.0)
-    (dotimes [i n]
-      (copy! (col mat i) (col res i)))
-    res))
-
-(defn- forward
-  "H = sigmoid(a*x+b)"
-  [a b x]
-  (sigmoid
-   (mpv (mm x (trans a))
-        b)))
-
-(defn fit [model]
-  (let [{:keys [x y n-hidden]} model
-        n-cols (ncols x)
-        a (random-samples n-hidden n-cols)
-        b (random-samples n-hidden)
-        h (forward a b x)
-        beta (mm (pinv h) y)]
-    (assoc model :a a :b b :beta beta)))
-
-(defn predict [model x]
-  (let [{:keys [a b beta]} model
-        h (forward a b x)]
-    (mm h beta)))
-
-(defn- sequence-shape [ls]
-  (let [m (count ls)]
-    (if (-> ls first sequential?)
-      [m (-> ls first count)]
-      [m 1])))
-
-(defn- construct-x-y [model x y]
-  (let [{:keys [add-bias? normalize?]} model
-        [m n] (sequence-shape x)
-        x (trans (dge n m (flatten x)))]
-    [(cond-> x
-       normalize? normalize
-       add-bias? add-bias)
-     (dge m 1 y)]))
-
-(defn regression [{:keys [x y] :as arg-map}]
-  (let [[x y] (construct-x-y arg-map x y)]
+(defn regressor
+  "Generate model for regression"
+  [{:keys [x y] :as arg-map}]
+  {:pre [(s/valid? ::spec/model* arg-map)]
+   :post [(s/valid? ::spec/model %)]}
+  (let [x (op/to-matrix x)
+        y (op/to-matrix y)]
     (merge default-argument
            {:type :regression }
            (assoc arg-map :x x :y y))))
 
-(defn classification [arg-map]
-  (merge default-argument
-         {:type :classification}
-         arg-map))
+(defn classifier
+  "Generate model for classification"
+  [{:keys [x y classes] :as arg-map}]
+  {:pre [(s/valid? ::spec/classification-model* arg-map)]
+   :post [(s/valid? ::spec/classification-model %)]}
+  (let [x (op/to-matrix x arg-map)
+        classes (vec (or classes (distinct y)))
+        n-class (count classes)
+        class-map (zipmap classes (range n-class))
+        y (map #(get class-map %) y)
+        y (op/nums->matrix y n-class)]
+    (merge default-argument
+           {:type :classification}
+           (assoc arg-map :x x :y y :classes classes))))
+
+(defn fit [model]
+  (merge model (alg/fit model)))
+
+(defmulti predict
+  {:arglists '([model x])}
+  (fn [model x] (:type model)))
+
+(defmethod predict :default
+  [model x]
+  (let [x (op/to-matrix x)]
+    (alg/predict model x)))
+
+(defmethod predict :classification
+  [{:keys [classes] :as model} x]
+  (->> (op/to-matrix x model)
+       (alg/predict model)
+       op/matrix->nums
+       (map #(nth classes %))))
 
 (defmulti score
-  "regression -> Returns the coefficient of determination R^2 of the prediction.
-  "
+  {:arglists '([model x y])}
   (fn [model x y] (:type model)))
 
 (defmethod score :regression
   [model x y]
-  (let [[x y] (construct-x-y model x y)
-        y' (predict model x)
-        y-v (col y 0)
-        y'-v (col y' 0)
-        num-rows (mrows y)
-        y-mean (/ (sum y-v) num-rows)
-        y-mean-v (dv (repeat num-rows y-mean))
-        u (sum (n.v/pow (axpy -1 y'-v y-v) 2))
-        v (sum (n.v/pow (axpy -1 y-mean-v y-v) 2))]
-    (- 1.0 (/ u v))))
+  (let [y' (predict model x)]
+    {:coefficient-of-determination
+     (neelm.score.regression/coefficient-of-determination y y')}))
 
-(defn vmax [v]
-  (entry v (imax v)))
-(defn vmin [v]
-  (entry v (imin v)))
+(defmethod score :classification
+  [model x y]
+  (let [y' (predict model x)]
+    {:accuracy (neelm.score.classification/accuracy y y')
+     :micro-f (neelm.score.classification/f-score y y' (:classes model))}))
 
-(defn normalize [x & [opt]]
-  (let [from (:from opt 0.0)
-        to  (:to opt 1.0)
-        cs (cols x)
-        n (-> cs first dim)
-        cols-max (dv (map vmax cs))
-        cols-min (dv (map vmin cs))
-        std (mdv (mpv -1 x cols-min)
-                 (axpy -1 cols-min cols-max))]
-    (mpv (scal (- to from) std)
-         (dv (repeat (ncols x) from)))))
+(defn save-model [model file-path]
+  (neelm.serialize/save model file-path))
+
+(defn load-model [file-path]
+  (neelm.serialize/load file-path))

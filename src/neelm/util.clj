@@ -1,37 +1,28 @@
 (ns neelm.util
   (:require [uncomplicate.neanderthal.core :refer :all]
-            [uncomplicate.neanderthal.native :refer :all]))
+            [uncomplicate.neanderthal.native :refer :all]
+            [neelm.operation :as op]))
 
-(defn nums->matrix
-  ([nums] (nums->matrix nums (inc (reduce max nums))))
-  ([nums num-of-class]
-   (let [num-rows (count nums)
-         res (dge num-rows num-of-class)]
-     (dotimes [i num-rows]
-       (entry! res i (nth nums i) 1.0))
-     res)))
+(defn- vmax [v]
+  (entry v (imax v)))
 
-(defn matrix->nums
-  [mat]
-  (map imax (rows mat)))
+(defn- vmin [v]
+  (entry v (imin v)))
 
-(defn msplit-at [n mat]
-  (let [num-rows (mrows mat)
-        num-cols (ncols mat)]
-    (list
-      (submatrix mat 0 0 n num-cols)
-      (submatrix mat n 0 (- num-rows n) num-cols))))
+(defn- normalize* [x from-val to-val]
+  (let [cs (cols x)
+        n (-> cs first dim)
+        cols-max (dv (map vmax cs))
+        cols-min (dv (map vmin cs))
+        std (op/divide (op/minus x cols-min)
+                       (op/minus cols-max cols-min))]
+    (op/plus (scal (- to-val from-val) std)
+             (dv (repeat (ncols x) from-val)))))
 
-(defn random-samples [x y & [opt]]
-  (let [ratio (:ratio opt 2/3)
-        num-rows (mrows x)
-        num-cols (ncols x)
-        mmm (int (* num-rows ratio))
-        row-indexes (take mmm (shuffle (range num-rows)))
-        x' (dge mmm num-cols)
-        y' (dge mmm (ncols y)) ]
-    (doseq [i (range mmm)]
-      (copy! (row x (nth row-indexes i)) (row x' i)))
-    (doseq [i (range mmm)]
-      (copy! (row y (nth row-indexes i)) (row y' i)))
-    [x' y']))
+(defn normalize [x & [opt]]
+  (let [from (:from opt 0.0)
+        to (:to opt 1.0)
+        mrows (count x)
+        ncols (-> x first count)
+        mat (dge mrows ncols (flatten x) {:layout :row})]
+    (seq (normalize* mat from to))))
