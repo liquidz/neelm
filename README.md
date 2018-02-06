@@ -53,6 +53,6 @@ See [examples](./examples/) directory.
 
 ## License
 
-Copyright © 2017 Masashi Iizuka
+Copyright © 2018 Masashi Iizuka
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
