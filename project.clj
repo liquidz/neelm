@@ -10,6 +10,7 @@
   {:dev {:source-paths  ["example"]
          :dependencies [[fudje  "0.9.7"]
                         [com.taoensso/tufte  "1.1.2"]
+                        [criterium "0.4.4"]
                         [nz.ac.waikato.cms.weka/weka-stable "3.8.0"]
                         [incanter/incanter-core "1.5.7"]
                         [incanter/incanter-charts "1.5.7"]]

@@ -7,7 +7,8 @@
             neelm.serialize
             [neelm.spec :as spec]))
 
-(def default-argument {:hidden-nodes 200
+(def default-argument {:algorithm :elm
+                       :hidden-nodes 200
                        :activation :sigmoid})
 
 (defn regressor
@@ -26,7 +27,7 @@
   [{:keys [x y classes] :as arg-map}]
   {:pre [(s/valid? ::spec/classification-model* arg-map)]
    :post [(s/valid? ::spec/classification-model %)]}
-  (let [x (op/to-matrix x arg-map)
+  (let [x (op/to-matrix x)
         classes (vec (or classes (distinct y)))
         n-class (count classes)
         class-map (zipmap classes (range n-class))
@@ -50,7 +51,7 @@
 
 (defmethod predict :classification
   [{:keys [classes] :as model} x]
-  (->> (op/to-matrix x model)
+  (->> (op/to-matrix x)
        (alg/predict model)
        op/matrix->nums
        (map #(nth classes %))))

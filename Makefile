@@ -5,6 +5,7 @@ all: iris boston letter
 iris: assets/iris.data
 boston: assets/housing.data
 letter: assets/letter.data
+#diabetes: assets/diabetes-data.tar.Z
 
 assets/iris.data:
 	wget -O $@ https://archive.ics.uci.edu/ml/machine-learning-databases/iris/iris.data
@@ -28,6 +29,9 @@ assets/mnist.scale.t: assets/mnist.scale.t.bz2
 assets/mnist.scale.t.bz2:
 	wget -O $@ \
 		https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/mnist.scale.t.bz2
+
+#assets/diabetes-data.tar.Z:
+#	wget -O $@ https://archive.ics.uci.edu/ml/machine-learning-databases/diabetes/diabetes-data.tar.Z
 
 clean:
 	\rm -rf assets/*.data

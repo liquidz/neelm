@@ -1,5 +1,5 @@
 (ns neelm.alg.relm
-  (:require [neelm.elm :as elm]
+  (:require [neelm.alg.elm :as elm]
             [neelm.operation :as op]
             [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.native :refer :all]))
@@ -19,7 +19,7 @@
             ht y))
       ;; [$ V = H^T(\frac{I}{C} + HH^T)^{-1}Y ]
       (let [hht (mm h ht)
-            ic (identity-matrix (mrows hht) (/ 1 lambda))]
+            ic (op/identity-matrix (mrows hht) (/ 1 lambda))]
         (mm ht (op/inv (op/plus ic hht)) y)))))
 
 (defn fit [model]
