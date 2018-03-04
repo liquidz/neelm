@@ -1,21 +1,20 @@
 (ns neelm.core
-  (:require [clojure.spec.alpha :as s]
-            [neelm.alg :as alg]
+  "Extreme Learning Machine implementation powered by Neanderthal"
+  (:require [neelm.alg :as alg]
             [neelm.operation :as op]
             neelm.score.classification
             neelm.score.regression
-            neelm.serialize
-            [neelm.spec :as spec]))
+            neelm.validation
+            neelm.serialize))
 
-(def default-argument {:algorithm :elm
-                       :hidden-nodes 200
-                       :activation :sigmoid})
+(def default-argument {:algorithm :relm
+                       :hidden-nodes 100
+                       :activation :sigmoid
+                       :validation-method :k-fold})
 
 (defn regressor
   "Generate model for regression"
   [{:keys [x y] :as arg-map}]
-  {:pre [(s/valid? ::spec/model* arg-map)]
-   :post [(s/valid? ::spec/model %)]}
   (let [x (op/ensure-matrix x)
         y (op/ensure-matrix y)]
     (merge default-argument
@@ -25,8 +24,6 @@
 (defn classifier
   "Generate model for classification"
   [{:keys [x y classes] :as arg-map}]
-  {:pre [(s/valid? ::spec/classification-model* arg-map)]
-   :post [(s/valid? ::spec/classification-model %)]}
   (let [x (op/ensure-matrix x)
         classes (vec (or classes (distinct y)))
         n-class (count classes)
@@ -37,8 +34,9 @@
            {:type :classification}
            (assoc arg-map :x x :y y :classes classes))))
 
-(defn fit [model]
-  (merge model (alg/fit model)))
+(defn fit
+  ([model x y] (fit (assoc model :x x :y y)))
+  ([model] (alg/fit model)))
 
 (defmulti predict
   {:arglists '([model x])}
@@ -71,6 +69,22 @@
   (let [y' (predict model x)]
     {:accuracy (neelm.score.classification/accuracy y y')
      :micro-f (neelm.score.classification/f-score y y' (:classes model))}))
+
+(defmulti validate
+  (fn [model & _] (:type model)))
+
+(defmethod validate :default
+  [model & [opts]]
+  (neelm.validation/validate-model
+   model (assoc opts :fit-fn fit :score-fn score)))
+
+(defmethod validate :classification
+  [model & [opts]]
+  (letfn [(score-fn [model x y]
+            (let [y (map #(nth (:classes model) %) (op/matrix->nums y))]
+              (score model x y)))]
+    (neelm.validation/validate-model
+     model (assoc opts :fit-fn fit :score-fn score-fn))))
 
 (defn save-model [model file-path]
   (neelm.serialize/save model file-path))
