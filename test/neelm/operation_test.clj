@@ -1,6 +1,6 @@
 (ns neelm.operation-test
   (:require [clojure.test :as t]
-            [neelm.operation :as op]
+            [neelm.operation :as sut]
             [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.native :refer :all]))
 
@@ -75,7 +75,7 @@
 
 (t/deftest pinv-test
   (t/testing "column layout"
-    (let [mat (op/ensure-matrix [[1 0 -1] [3 -2 3] [4 1 1]])]
+    (let [mat (sut/ensure-matrix [[1 0 -1] [3 -2 3] [4 1 1]])]
       (t/is (= (map #(Math/round %) (flatten (seq (mm mat (sut/pinv mat)))))
                [1 0 0 0 1 0 0 0 1]))))
 
@@ -83,9 +83,9 @@
     (t/is (thrown? AssertionError (sut/pinv (dge 3 2 (range 6) {:layout :row}))))))
 
 (t/deftest inv-test
-  (let [mat (op/ensure-matrix [[1 0 -1] [3 -2 3] [4 1 1]])]
+  (let [mat (sut/ensure-matrix [[1 0 -1] [3 -2 3] [4 1 1]])]
     (t/is (= (mm mat (sut/inv mat))
-             (op/diagonal-matrix 3)))))
+             (sut/diagonal-matrix 3)))))
 
 (t/deftest diagonal-matrix-test
   (t/is (= (dge 3 3 [1 0 0 0 1 0 0 0 1])
