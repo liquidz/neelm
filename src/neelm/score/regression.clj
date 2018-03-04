@@ -9,7 +9,7 @@
   y  - expected
   y' - predicted"
   [y y']
-  (let [y (op/to-matrix y)
+  (let [y (op/ensure-matrix y)
         y-v (col y 0)
         y'-v (col y' 0)
         num-rows (mrows y)

@@ -16,8 +16,8 @@
   [{:keys [x y] :as arg-map}]
   {:pre [(s/valid? ::spec/model* arg-map)]
    :post [(s/valid? ::spec/model %)]}
-  (let [x (op/to-matrix x)
-        y (op/to-matrix y)]
+  (let [x (op/ensure-matrix x)
+        y (op/ensure-matrix y)]
     (merge default-argument
            {:type :regression }
            (assoc arg-map :x x :y y))))
@@ -27,7 +27,7 @@
   [{:keys [x y classes] :as arg-map}]
   {:pre [(s/valid? ::spec/classification-model* arg-map)]
    :post [(s/valid? ::spec/classification-model %)]}
-  (let [x (op/to-matrix x)
+  (let [x (op/ensure-matrix x)
         classes (vec (or classes (distinct y)))
         n-class (count classes)
         class-map (zipmap classes (range n-class))
@@ -46,12 +46,12 @@
 
 (defmethod predict :default
   [model x]
-  (let [x (op/to-matrix x)]
+  (let [x (op/ensure-matrix x)]
     (alg/predict model x)))
 
 (defmethod predict :classification
   [{:keys [classes] :as model} x]
-  (->> (op/to-matrix x)
+  (->> (op/ensure-matrix x)
        (alg/predict model)
        op/matrix->nums
        (map #(nth classes %))))

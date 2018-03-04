@@ -68,11 +68,13 @@
     (mm! alpha (trans vt) (trans u) beta inva)
     inva))
 
-(defn to-matrix [x]
+(defn ensure-matrix [x]
   (if (matrix? x)
     x
     (let [[m n] (shape x)]
-      (dge m n (flatten x) {:layout :row}))))
+      (if (= n 1)
+        (dge m n x)
+        (dge m n (flatten (apply map list x)))))))
 
 (defn to-seq [mat]
   (for [r (rows mat)]

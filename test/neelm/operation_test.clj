@@ -45,11 +45,11 @@
       (t/is (= [2 3] (sut/shape mat)))))
 
   (t/testing "matrix"
-    (let [mat (sut/to-matrix (dge 2 3 (range 6)))]
+    (let [mat (sut/ensure-matrix (dge 2 3 (range 6)))]
       (t/is (matrix? mat))
       (t/is (= [2 3] (sut/shape mat))))))
 
 (t/deftest inv-test
-  (let [mat (dge 3 3 [1 0 -1 3 -2 3 4 1 1] {:layout :row})]
+  (let [mat (op/ensure-matrix [[1 0 -1] [3 -2 3] [4 1 1]])]
     (t/is (= (mm mat (sut/inv mat))
              (dge 3 3 [1 0 0 0 1 0 0 0 1] {:layout :row})))))
