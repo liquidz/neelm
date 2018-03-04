@@ -9,5 +9,6 @@
 
 (defn main []
   (let [{:keys [x y]} (dataset)
-        model (-> {:x x :y y} regressor fit)]
-    (println (score model x y))))
+        model (regressor {:x x :y y})]
+    (println "score:" (score (fit model) x y))
+    (println "validation:" (validate model))))
