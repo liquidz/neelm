@@ -1,10 +1,11 @@
-.PHONY: all clean iris boston letter
+.PHONY: all clean doc iris boston letter
 
 all: iris boston letter
 
 iris: assets/iris.data
 boston: assets/housing.data
 letter: assets/letter.data
+mnist: assets/mnist.scale assets/mnist.scale.t
 #diabetes: assets/diabetes-data.tar.Z
 
 assets/iris.data:
@@ -32,6 +33,12 @@ assets/mnist.scale.t.bz2:
 
 #assets/diabetes-data.tar.Z:
 #	wget -O $@ https://archive.ics.uci.edu/ml/machine-learning-databases/diabetes/diabetes-data.tar.Z
+
+doc:
+	lein codox
+
+serv_doc: doc
+	(cd target/doc && python -m SimpleHTTPServer 5000)
 
 clean:
 	\rm -rf assets/*.data

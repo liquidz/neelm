@@ -4,10 +4,13 @@
 
 ## Usage
 
-clojars
-```
-[neelm "0.1.0-SNAPSHOT"]
-```
+* TODO : clojars
+
+### Supported algorithms
+
+* Basic ELM
+* [Regularized ELM](https://www.hindawi.com/journals/mpe/2015/129021/)
+* [Multiple hidden layers ELM](https://www.hindawi.com/journals/mpe/2017/4670187/)
 
 ### Regression
 
@@ -15,11 +18,13 @@ sin curve example
 ```
 (require '[neelm.core :refer :all])
 
-(def x (range -10 10 0.1)) ;; FIXME add bias
+(def x (range -10 10 0.1))
 (def y (map #(Math/sin %) x))
 
 (def model
-  (fit (regressor {:x x :y y})))
+  ;; Add bias to x
+  (let [x (map #(vector % 1.0) x)]
+    (fit (regressor {:x x :y y}))))
 
 (println (predict model x))
 (println (score model x y))
