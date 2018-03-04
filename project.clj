@@ -13,5 +13,7 @@
                         [nz.ac.waikato.cms.weka/weka-stable "3.8.0"]
                         [incanter/incanter-core "1.5.7"]
                         [incanter/incanter-charts "1.5.7"]]
+         :plugins [[lein-codox "0.10.3"]]
          :repl-options {:timeout 3600000}
-         :jvm-opts  ["-Xmx1000m"]}})
+         :jvm-opts  ["-Xmx1000m"]}}
+  :codox {:namespaces [#"^neelm\."]})

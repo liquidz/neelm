@@ -1,20 +1,17 @@
 (ns iris
-  (:require [clojure.java.io :as io]
-            [clojure.string :as str]
+  (:require [dev-util :as u]
             [neelm.core :refer :all]))
 
-(defn- read-asset []
-  (for [line (str/split-lines (slurp (io/file "assets/iris.data")))
-        :let [row (str/split line #",")
-              x (drop-last row)]]
-    (concat (map #(Double/parseDouble %) x) [(last row)])))
-
 (defn- dataset []
-  (let [data (read-asset)]
-    {:x (map drop-last data)
+  (let [data (->> {:separator #"," :parse-fn identity}
+                  (u/read-asset "iris.data"))]
+    {:x (->> data
+             (map drop-last)
+             (map #(map u/parse-double %)))
      :y (map last data)}))
 
 (defn main []
   (let [{:keys [x y]} (dataset)
-        model (fit (classifier {:x x :y y}))]
-    (score model x y)))
+        model (classifier {:x x :y y})]
+    (println "score:" (score (fit model) x y))
+    (println "validation:" (validate model))))
