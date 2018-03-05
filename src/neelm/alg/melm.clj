@@ -15,30 +15,36 @@
     [(copy (submatrix mat 0 0 num-rows n))
      (copy (submatrix mat 0 n num-rows (- num-cols n)))]))
 
-(defn fit [model]
-  (let [model (merge default-argument model)
-        {:keys [x y hidden-nodes hidden-layers activation]} model
+(defn- first-layer [model]
+  (let [{:keys [x y hidden-nodes activation]} model
         w (op/random-samples hidden-nodes (ncols x))
         b (op/random-samples hidden-nodes)
         h (elm/forward activation w b x)]
-    ;; FIXME
-    (merge model
-           (loop [i 1
-                  h h
-                  beta (relm/regularized-beta h model)
-                  result [{:w w :b b}]]
-             (if (< i hidden-layers)
-               (let [h1 (mm y (op/pinv beta))
-                     h1 (op/normalize h1 -0.9 0.9)
-                     he (op/safe-trans (op/concat-cols (dge (mrows h) 1 (repeat 1)) h))
-                     t1 (trans (act/deactivate activation h1))
-                     t2 (op/pinv he)
-                     whe (mm t1 t2)
-                     [b1 w1] (split-cols-at 1 whe)
-                     b1 (dv (flatten (seq b1))) ;; vectorize
-                     h2 (elm/forward activation w1 b1 h)]
-                 (recur (inc i) h2 (relm/regularized-beta h2 model) (conj result {:w w1 :b b1})))
-               {:layer-params result :beta beta})))))
+    {:w w :b b :h h :beta (relm/regularized-beta h model)}))
+
+(defn- rest-layer [model last-layer-param]
+  (let [{:keys [x y activation]} model
+        {:keys [h beta]} last-layer-param
+        h1 (mm y (op/pinv beta))
+        h1 (op/normalize h1 -0.9 0.9)
+        he (op/safe-trans (op/concat-cols (dge (mrows h) 1 (repeat 1)) h))
+        t1 (trans (act/deactivate activation h1))
+        t2 (op/pinv he)
+        whe (mm t1 t2)
+        [b1 w1] (split-cols-at 1 whe)
+        b1 (dv (flatten (seq b1))) ;; vectorize
+        h2 (elm/forward activation w1 b1 h)]
+    {:w w1 :b b1 :h h2 :beta (relm/regularized-beta h2 model)}))
+
+(defn fit [model]
+  (let [model (merge default-argument model)
+        {:keys [hidden-layers]} model
+        params (->> (first-layer model)
+                    (iterate #(rest-layer model %))
+                    (take hidden-layers))]
+    (assoc model
+           :layer-params (map #(select-keys % [:w :b]) params)
+           :beta (-> params last :beta))))
 
 (defn predict [model x]
   (let [{:keys [beta activation layer-params]} model
