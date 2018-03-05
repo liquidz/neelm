@@ -13,3 +13,10 @@
   (let [{:keys [x y]} (dataset)
         model (classifier {:x x :y y :hidden-nodes 200 :lambda (Math/pow 10 4)})]
     (validate model)))
+
+(defn melm-main []
+  (let [{:keys [x y]} (dataset)
+        model (classifier {:x x :y y :hidden-nodes 200 :lambda (Math/pow 10 4)
+                           :activation :hyperbolic-tangent
+                           :algorithm :melm})]
+    (println (score (fit model) x y))))
