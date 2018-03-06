@@ -5,7 +5,7 @@
             [uncomplicate.neanderthal.vect-math :as n.v]))
 
 (t/deftest activation-and-deactivation-test
-  (doseq [k [:sigmoid :hyperbolic-tangent]
+  (doseq [k [:sigmoid :tanh]
           x [(dge 3 3 (range 9))
              (dge 3 3 (range -4 5))]]
     (t/testing (name k)

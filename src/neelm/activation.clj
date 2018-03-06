@@ -1,5 +1,6 @@
 (ns neelm.activation
   (:require [uncomplicate.neanderthal.core :refer :all]
+            [uncomplicate.neanderthal.native :refer :all]
             [uncomplicate.neanderthal.vect-math :as n.v]))
 
 (defmulti activate! (fn [kw _] kw))
@@ -12,12 +13,14 @@
   (n.v/exp! x)
   (alter! x (fn ^double [^long i ^long j ^double v] (/ 1 (inc v)))))
 
-;; g(x) = (1 - e^{-x}) / (1 + e^{-x})
-(defmethod activate! :hyperbolic-tangent
+;; g(x) = (e^{x} - e^{-x}) / (e^{x} + e^{-x})
+;;      = (e^{2x} - 1) / (e^{2x} + 1)
+(defmethod activate! :tanh
   [_ x]
-  (scal! -1 x)
+  (scal! 2 x)
   (n.v/exp! x)
-  (alter! x (fn ^double [^long i ^long j ^double v] (/ (- 1 v) (+ 1 v)))))
+  (alter! x (fn ^double [^long i ^long j ^double v]
+              (/ (- v 1) (+ v 1)))))
 
 (defmethod deactivate! :sigmoid
   [_ y]
@@ -25,10 +28,12 @@
   (n.v/log! y)
   (scal! -1 y))
 
-(defmethod deactivate! :hyperbolic-tangent
+;; ln((1 + x) / (1 - x)) / 2
+(defmethod deactivate! :tanh
   [_ x]
   (alter! x (fn ^double [^long i ^long j ^double v] (/ (+ 1 v) (- 1 v))))
-  (n.v/log! x))
+  (n.v/log! x)
+  (scal! 1/2 x))
 
 (defn activate [kw x]
   (let [y (copy x)]
@@ -38,9 +43,4 @@
 (defn deactivate [kw y]
   (let [x (copy y)]
     (deactivate! kw x)
-
-    (when (some #(Double/isNaN %) (flatten (seq x)))
-      (println "deactivate NaN !!" y)
-      )
-
     x))
