@@ -47,7 +47,7 @@
 
 (t/deftest regularized-melm-test
   (let [opt {:algorithm :melm :lambda (Math/pow 10 4)
-             :activation :hyperbolic-tangent :hidden-layers 3}]
+             :activation :tanh :hidden-layers 3}]
     (test-regression [model] opt
       (t/is (= 3 (count (:layer-params model)))))
     (test-classification [model] opt
