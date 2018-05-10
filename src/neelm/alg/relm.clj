@@ -27,8 +27,8 @@
 (defn fit [model]
   (let [model (merge default-argument model)
         {:keys [x y hidden-nodes activation]} model
-        a (op/random-samples hidden-nodes (ncols x))
-        b (op/random-samples hidden-nodes)
-        h (elm/forward activation a b x)
+        weight (op/random-samples hidden-nodes (ncols x))
+        bias (op/random-samples hidden-nodes)
+        h (elm/forward activation weight bias x)
         beta (regularized-beta h model)]
-    (merge model {:a a :b b :beta beta})))
+    (merge model {:weight weight :bias bias :beta beta})))

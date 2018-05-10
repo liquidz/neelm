@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [com.taoensso/nippy "2.14.0"]
-                 [uncomplicate/neanderthal "0.18.0"]]
+                 [uncomplicate/neanderthal "0.19.0"]]
   :profiles
   {:dev {:source-paths  ["example"]
          :dependencies [[fudje  "0.9.7"]

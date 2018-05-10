@@ -1,4 +1,5 @@
 (ns neelm.alg.melm
+  "Multiple Hidden Layers Extreme Learning Machine "
   (:require [neelm.activation :as act]
             [neelm.alg.elm :as elm]
             [neelm.alg.relm :as relm]

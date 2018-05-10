@@ -1,6 +1,7 @@
 (ns neelm.operation-test
   (:require [clojure.test :as t]
             [neelm.operation :as sut]
+            [uncomplicate.commons.core :refer [info]]
             [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.native :refer :all]))
 
@@ -47,6 +48,17 @@
     (t/is (= (sut/minus (dge 2 3 (range 6))
                         (dv 10 20 30))
              (dge 2 3 [-10 -9 -18 -17 -26 -25])))))
+
+(t/deftest divide-test
+  (t/testing "matrix divide matrix"
+    (t/is (= (sut/divide (dge 2 3 [2 4 3 6 5 10])
+                         (dge 2 3 [2 4 3 6 5 10]))
+             (dge 2 3 (repeat 1)))))
+
+  (t/testing "matrix divide vector"
+    (t/is (= (sut/divide (dge 2 3 [2 4 3 6 5 10])
+                         (dv [2 3 5]))
+             (dge 2 3 [1 2 1 2 1 2])))))
 
 (t/deftest ensure-matrix-test
   (t/testing "2 dim sequence"

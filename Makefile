@@ -17,13 +17,11 @@ assets/housing.data:
 assets/letter.data:
 	wget -O $@ https://archive.ics.uci.edu/ml/machine-learning-databases/letter-recognition/letter-recognition.data
 
-
 assets/mnist.scale: assets/mnist.scale.bz2
 	(cd assets; bunzip2 mnist.scale.bz2)
 assets/mnist.scale.bz2:
 	wget -O ./assets/mnist.scale.bz2 \
 		https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/mnist.scale.bz2
-
 
 assets/mnist.scale.t: assets/mnist.scale.t.bz2
 	(cd assets; bunzip2 mnist.scale.t.bz2)

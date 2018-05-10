@@ -2,6 +2,7 @@
   "Matrix Operation"
   (:refer-clojure :exclude [shuffle partition])
   (:require [neelm.operation :as op]
+            [uncomplicate.commons.core :refer [info]]
             [uncomplicate.neanderthal.core :refer :all]
             [uncomplicate.neanderthal.linalg :as n.l]
             [uncomplicate.neanderthal.native :refer :all])
@@ -38,10 +39,15 @@
             (axpy! v1 r)))
 
 (defmulti divide! (fn [a b] [(class a) (class b)]))
+(defmethod divide! [RealMatrix RealMatrix]
+  [m1 m2]
+  (alter! m1 (fn ^double [^long i ^long j ^double x]
+               (/ x  (entry m2 i j)))))
+
 (defmethod divide! [RealMatrix RealVector]
   [m1 v1]
   (alter! m1 (fn ^double [^long i ^long j ^double x]
-                (/ x  (entry v1 j)))))
+               (/ x  (entry v1 j)))))
 
 (defn plus [a b]
   (let [a' (copy a)]
